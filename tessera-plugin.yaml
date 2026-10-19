@@ -1,0 +1,63 @@
+# The manifest: who made the plugin, what it may do, and what the Tessera app shows. No code and no words: every name,
+# label and hint is a key into translations/<language>.json, part "app". docs/MANIFEST.md has every field.
+#
+# The tile belongs to a sensor of Home Assistant's Waze Travel Time integration: its state is the travel time in
+# minutes, its attributes the route, the distance and the two ends. The plugin asks Home Assistant for two more things
+# through the app: the sensor's recent history (the line on the tile) and Waze's route alternatives (the card). Nothing
+# else is needed: no key, no web service of its own; Waze is reached by Home Assistant's own integration.
+id: waze_traveltime
+version: 0.1.0
+api: "0.10"
+icon: car
+maintainer: Heronimonimo
+license: MIT
+stage: beta
+topics: [travel]
+requires:
+  esphome: 2026.6.2
+boards: any
+flash_kb: 16
+
+permissions:
+  # The tile's line: the sensor's states of the last hours. The card: the routes Waze offers right now.
+  ha_commands: ["history/history_during_period", "call_service:waze_travel_time.get_travel_times"]
+
+answers:
+  # history_during_period with minimal_response and no_attributes answers {"sensor.x": [{"s": "23.4", "lu": 1791...}]}:
+  # two lists of numbers fit where the objects would not.
+  - command: history/history_during_period
+    fields:
+      minutes: { path: "[*][*].s", as: numbers }
+      at: { path: "[*][*].lu", as: numbers }
+
+tiles:
+  # The travel time now, how far it is off the usual, the route and when you arrive, and how it went the last hours.
+  - id: travel
+    name: tile_name
+    icon: car
+    sizes: { min: 1x1, max: 4x4 }
+    memory: 1700
+    domains: [sensor]
+    attributes: [route, distance, origin, destination]
+    # Offers the sensors of a travel time integration, not every sensor of the house.
+    has_attributes: [route, origin, destination]
+    example: tile_example
+    preview: { title: "{name}", value: "{state} min" }
+    options:
+      - { id: usual, kind: number, min: 0, max: 240, step: 1, unit: min, default: 0, label: opt_usual, hint: opt_usual_hint }
+      - { id: hours, kind: number, min: 0, max: 8, step: 1, unit: h, default: 3, label: opt_hours, hint: opt_hours_hint }
+      - id: region
+        kind: choice
+        default: eu
+        label: opt_region
+        hint: opt_region_hint
+        choices:
+          - { value: eu, label: region_eu }
+          - { value: us, label: region_us }
+          - { value: na, label: region_na }
+          - { value: il, label: region_il }
+          - { value: au, label: region_au }
+
+cards:
+  # The routes Waze offers right now, fastest first, opened by a tap on the tile.
+  - { id: routes, name: card_name, wide: true }

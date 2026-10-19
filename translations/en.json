@@ -1,0 +1,38 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "min": "min",
+    "via": "via {route}",
+    "arrive": "arrive {time}",
+    "km": "{n} km",
+    "usual": "usual",
+    "late": "+{n}",
+    "early": "-{n}",
+    "now": "now",
+    "choose": "Choose a Waze sensor",
+    "no_time": "No travel time",
+    "waiting": "Asking Waze…",
+    "failed": "Waze did not answer",
+    "no_routes": "No routes found",
+    "fastest": "fastest",
+    "slower": "+{n} min"
+  },
+  "app": {
+    "name": "Waze travel time",
+    "summary": "Your travel time from Waze: the fastest route now, the delay, and how traffic went the last hours.",
+    "tile_name": "Travel time",
+    "tile_example": "23 min via A12, +8 against usual",
+    "opt_usual": "Usual travel time",
+    "opt_usual_hint": "Your time without traffic, for the delay and the dashed line. 0 shows no delay.",
+    "opt_hours": "Hours on the line",
+    "opt_hours_hint": "How far back the line under the time goes. 0 shows no line.",
+    "opt_region": "Waze region",
+    "opt_region_hint": "The region of your Waze Travel Time integration, for the routes on the card.",
+    "region_eu": "Europe",
+    "region_us": "United States",
+    "region_na": "North America",
+    "region_il": "Israel",
+    "region_au": "Australia",
+    "card_name": "Routes"
+  }
+}

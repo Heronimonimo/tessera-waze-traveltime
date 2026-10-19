@@ -1,0 +1,57 @@
+# What tools/preview.py shows (docs/PREVIEW.md): a morning commute that slowly fills up. The Waze sensor says 23
+# minutes via the A12 where 15 is usual, its history of the last three hours rises from 15, and Waze offers three
+# routes for the card.
+tiles:
+  - tile: travel
+    name: To work
+    entity: sensor.waze_travel_time
+    options: { usual: 15, hours: 3 }
+  - tile: travel
+    name: No delay given
+    entity: sensor.waze_travel_time
+    options: { usual: 0, hours: 3 }
+    sizes: [2x1, 2x2]
+  - tile: travel
+    name: Not chosen yet
+    sizes: [1x1]
+
+states:
+  sensor.waze_travel_time:
+    state: "23.4"
+    attributes:
+      friendly_name: To work
+      unit_of_measurement: min
+      duration: 23.4
+      distance: 18.4
+      route: A12 Utrechtsebaan
+      origin: "52.0907,5.1214"
+      destination: "52.0705,4.3007"
+
+cards:
+  - card: routes
+    entity: sensor.waze_travel_time
+
+commands:
+  # Home Assistant's answer with minimal_response and no_attributes: the states of the window, each when it changed.
+  "history/history_during_period":
+    sensor.waze_travel_time:
+      - { s: "15.2", lu: "{epoch-3h}" }
+      - { s: "15.0", lu: "{epoch-170m}" }
+      - { s: "15.6", lu: "{epoch-150m}" }
+      - { s: "16.1", lu: "{epoch-130m}" }
+      - { s: "15.8", lu: "{epoch-115m}" }
+      - { s: "17.0", lu: "{epoch-100m}" }
+      - { s: "18.4", lu: "{epoch-85m}" }
+      - { s: "unavailable", lu: "{epoch-80m}" }
+      - { s: "19.9", lu: "{epoch-75m}" }
+      - { s: "21.3", lu: "{epoch-60m}" }
+      - { s: "24.6", lu: "{epoch-45m}" }
+      - { s: "26.0", lu: "{epoch-30m}" }
+      - { s: "24.8", lu: "{epoch-20m}" }
+      - { s: "23.4", lu: "{epoch-5m}" }
+  # waze_travel_time.get_travel_times: every route Waze offers, as it came.
+  "call_service:waze_travel_time.get_travel_times":
+    routes:
+      - { duration: 27.1, distance: 22.1, name: N11 Bodegraven, street_names: [N11, Bodegraven, A12] }
+      - { duration: 23.4, distance: 18.4, name: A12 Utrechtsebaan, street_names: [Utrechtsebaan, A12, Zoetermeer] }
+      - { duration: 37.0, distance: 26.9, name: A4 A13, street_names: [A4, Ypenburg, A13] }

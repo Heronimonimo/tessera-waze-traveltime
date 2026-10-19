@@ -1,0 +1,38 @@
+{
+  "_meta": { "name": "Nederlands" },
+  "screen": {
+    "min": "min",
+    "via": "via {route}",
+    "arrive": "aankomst {time}",
+    "km": "{n} km",
+    "usual": "normaal",
+    "late": "+{n}",
+    "early": "-{n}",
+    "now": "nu",
+    "choose": "Kies een Waze-sensor",
+    "no_time": "Geen reistijd",
+    "waiting": "Waze wordt gevraagd…",
+    "failed": "Waze gaf geen antwoord",
+    "no_routes": "Geen routes gevonden",
+    "fastest": "snelst",
+    "slower": "+{n} min"
+  },
+  "app": {
+    "name": "Waze-reistijd",
+    "summary": "Je reistijd van Waze: de snelste route nu, de vertraging en hoe het verkeer de laatste uren ging.",
+    "tile_name": "Reistijd",
+    "tile_example": "23 min via A12, +8 op normaal",
+    "opt_usual": "Normale reistijd",
+    "opt_usual_hint": "Je tijd zonder verkeer, voor de vertraging en de stippellijn. 0 toont geen vertraging.",
+    "opt_hours": "Uren op de lijn",
+    "opt_hours_hint": "Hoe ver de lijn onder de tijd teruggaat. 0 toont geen lijn.",
+    "opt_region": "Waze-regio",
+    "opt_region_hint": "De regio van je Waze Travel Time-integratie, voor de routes op de kaart.",
+    "region_eu": "Europa",
+    "region_us": "Verenigde Staten",
+    "region_na": "Noord-Amerika",
+    "region_il": "Israël",
+    "region_au": "Australië",
+    "card_name": "Routes"
+  }
+}
