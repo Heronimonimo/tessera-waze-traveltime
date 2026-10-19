@@ -40,6 +40,8 @@ integration. No key, no account and no web service of its own: Home Assistant as
 - Waze Travel Time is an unofficial client of Waze's live map: when Waze changes something, the integration (and so
   this plugin) may stop until Home Assistant fixes it.
 - Works on every board, the CYD included: it shows no pictures.
+- Tried on Tessera's preview bench (the CYD, the Guition 4-inch, the Waveshare 4.3-inch standing up and the Guition
+  10.1-inch, light and dark), not yet on a real screen. Found something wrong? Open an issue.
 
 ## How it works
 
