@@ -15,7 +15,10 @@
     "failed": "Waze gaf geen antwoord",
     "no_routes": "Geen routes gevonden",
     "fastest": "snelst",
-    "slower": "+{n} min"
+    "slower": "+{n} min",
+    "bar": "{n} min",
+    "bar_late": "{n} min +{d}",
+    "usual_time": "Normale reistijd"
   },
   "app": {
     "name": "Waze-reistijd",
@@ -33,6 +36,12 @@
     "region_na": "Noord-Amerika",
     "region_il": "Israël",
     "region_au": "Australië",
-    "card_name": "Routes"
+    "card_name": "Routes",
+    "in_sensor": "Waze-sensor voor de bovenbalk",
+    "in_sensor_hint": "De Waze Travel Time-sensor die het item in de bovenbalk toont. Tegels kiezen hun eigen sensor in de inspector.",
+    "setting_usual": "Normale reistijd in de bovenbalk",
+    "setting_usual_hint": "Je tijd zonder verkeer, in minuten: de auto in de bovenbalk wordt groen, oranje of rood naar de vertraging. 0 houdt hem grijs.",
+    "bar_travel": "Reistijd",
+    "bar_example": "23 min +8"
   }
 }

@@ -1,3 +1,31 @@
-# What a screen gets when it takes this plugin: the component, configured. Tessera includes this file from the screen's
-# <name>.plugins.yaml and adds this plugin's components/ folder as an ESPHome external component.
+# What a screen gets when it takes this plugin. Tessera includes this file from the screen's <name>.plugins.yaml with
+# SENSOR filled in (the input chosen when the plugin was added), and adds the components folder beside it.
+defaults:
+  SENSOR: sensor.waze_travel_time
+
+# The travel time the top bar's item shows, straight from Home Assistant. The tiles get theirs through the app.
+sensor:
+  - platform: homeassistant
+    id: waze_bar_minutes
+    entity_id: ${SENSOR}
+    internal: true
+
+# The usual time the item's icon is coloured by, kept on the screen and shown in Home Assistant and on the screen's
+# settings page. 0: the icon keeps the bar's own colour.
+number:
+  - platform: template
+    id: waze_usual_time
+    name: "Waze usual time"
+    icon: mdi:car-clock
+    optimistic: true
+    min_value: 0
+    max_value: 240
+    step: 1
+    initial_value: 0
+    restore_value: true
+    unit_of_measurement: min
+    entity_category: config
+
 waze_traveltime:
+  minutes: waze_bar_minutes
+  usual: waze_usual_time

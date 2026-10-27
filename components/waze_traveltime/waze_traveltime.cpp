@@ -70,6 +70,8 @@ class TravelTile : public tessera::Tile, public Asker {
     hours_ = std::clamp(static_cast<int>(lroundf(c.options["hours"] | 3.0f)), 0, 8);  // 3 or 3.0, as the app kept it
     const char *region = c.options["region"] | "eu";
     snprintf(region_, sizeof region_, "%s", region);
+    // The sensor's region for a card opened for it, also before its two ends came.
+    if (!entity_.empty()) plugin_->remember(entity_.c_str(), nullptr, nullptr, region_);
 
     const int body = ui::line_height(Font::BODY);
     // The line takes the lower part of a tile of two rows or more, its times under it.
@@ -384,6 +386,7 @@ class TravelTile : public tessera::Tile, public Asker {
   lv_obj_t *name_{}, *delta_{}, *dot_{}, *number_{}, *unit_{}, *info_{}, *graph_{}, *from_{}, *now_{};
 };
 
+
 // ---- The card: every route Waze offers right now, fastest first ----
 class RoutesCard : public tessera::Card, public Asker {
  public:
@@ -397,20 +400,47 @@ class RoutesCard : public tessera::Card, public Asker {
     note_ = ui::text(parent_, Font::BODY_LARGE, theme::MUTED);
     lv_obj_set_width(note_, width_);
     ui::set_text(note_, plugin_->text("waiting"));
-    // The trip of the sensor it was opened for, as its tiles told the plugin; else it waits for the sensor in on_state.
+
+    // A row per route, as many as fit, made now and hidden until the answer fills them: its name and time, a bar as
+    // long as the time, the distance and the difference.
+    const int title = ui::line_height(Font::TITLE), body = ui::line_height(Font::BODY), bar = ui::px(8);
+    const int gap = ui::px(ui::large() ? 6 : 4), step = title + gap + bar + gap + body + ui::px(ui::large() ? 18 : 10);
+    fit_ = std::clamp((height_ + step - title - gap - bar - gap - body) / step, 1, ROWS);
+    for (int i = 0; i < fit_; ++i) {
+      Row &r = row_[i];
+      const int y = i * step;
+      r.time = ui::label(parent_, Font::TITLE, theme::INK);
+      lv_obj_set_pos(r.time, width_, y);
+      r.name = ui::label(parent_, Font::TITLE, theme::INK);
+      lv_obj_set_pos(r.name, 0, y);
+      r.track = ui::block(parent_, theme::TRACK);
+      lv_obj_set_size(r.track, width_, bar);
+      lv_obj_set_pos(r.track, 0, y + title + gap);
+      r.fill = ui::block(parent_, theme::MUTED);
+      lv_obj_set_size(r.fill, bar, bar);
+      lv_obj_set_pos(r.fill, 0, y + title + gap);
+      r.detail = ui::label(parent_, Font::BODY, theme::MUTED);
+      lv_obj_set_width(r.detail, width_);
+      lv_obj_set_pos(r.detail, 0, y + title + gap + bar + gap);
+      show(r, false);
+    }
+
+    // The trip of the sensor it was opened for, as its tiles told the plugin; else it waits for the sensor in on_state,
+    // with the region of the tile that showed the sensor.
     const Trip *trip = plugin_->trip(c.entity ? c.entity : "");
-    if (trip) ask(trip->origin, trip->destination, trip->region);
+    if (trip) snprintf(region_, sizeof region_, "%s", trip->region);
+    if (trip && *trip->origin && *trip->destination) ask(trip->origin, trip->destination);
   }
 
   // The tile it was opened from: its sensor's two ends, when the plugin did not know them yet.
   void on_state(JsonObjectConst data) override {
     if (asked_) return;
     const char *origin = data["attributes"]["origin"] | "", *destination = data["attributes"]["destination"] | "";
-    if (*origin && *destination) ask(origin, destination, "eu");
+    if (*origin && *destination) ask(origin, destination);
   }
 
   void on_theme() override {
-    for (int i = 0; i < rows_; ++i) {
+    for (int i = 0; i < fit_; ++i) {
       Row &r = row_[i];
       ui::set_color(r.name, theme::INK);
       ui::set_color(r.time, theme::INK);
@@ -421,7 +451,7 @@ class RoutesCard : public tessera::Card, public Asker {
 
   // The answer of waze_travel_time.get_travel_times: {"routes": [{"duration", "distance", "name", ...}]}.
   void answer(JsonObjectConst message) override {
-    if (rows_) return;
+    if (filled_) return;
     if (!(message["ok"] | false)) {
       ui::set_text(note_, plugin_->text("failed"));
       return;
@@ -456,66 +486,60 @@ class RoutesCard : public tessera::Card, public Asker {
     }
     std::sort(routes, routes + n, [](const Route &a, const Route &b) { return a.minutes < b.minutes; });
     lv_obj_add_flag(note_, LV_OBJ_FLAG_HIDDEN);
+    filled_ = true;
 
-    // A row per route, as many as fit: its name and time, a bar as long as the time, the distance and the difference.
-    const int title = ui::line_height(Font::TITLE), body = ui::line_height(Font::BODY), bar = ui::px(8);
-    const int gap = ui::px(ui::large() ? 6 : 4), step = title + gap + bar + gap + body + ui::px(ui::large() ? 18 : 10);
-    const int fit = std::max(1, std::min(n, (height_ + step - title - gap - bar - gap - body) / step));
+    const int gap = ui::px(ui::large() ? 6 : 4), bar = ui::px(8);
     const float slowest = routes[n - 1].minutes;
-    for (int i = 0; i < fit; ++i) {
+    for (int i = 0; i < std::min(n, fit_); ++i) {
       Row &r = row_[i];
       const Route &route = routes[i];
-      const int y = i * step;
       const std::string time = whole(route.minutes) + " " + plugin_->text("min");
       const int time_w = ui::text_width(time, Font::TITLE) + ui::px(2);
-      r.time = ui::label(parent_, Font::TITLE, theme::INK);
       lv_obj_set_width(r.time, time_w);
-      lv_obj_set_pos(r.time, width_ - time_w, y);
+      lv_obj_set_x(r.time, width_ - time_w);
       ui::set_text(r.time, time);
-      r.name = ui::label(parent_, Font::TITLE, theme::INK);
       lv_obj_set_width(r.name, std::max(1, width_ - time_w - gap * 2));
-      lv_obj_set_pos(r.name, 0, y);
       ui::set_text(r.name, route.name);
-      auto *track = ui::block(parent_, theme::TRACK);
-      lv_obj_set_size(track, width_, bar);
-      lv_obj_set_pos(track, 0, y + title + gap);
-      r.fill = ui::block(parent_, theme::MUTED);
-      lv_obj_set_size(r.fill, std::max(bar, static_cast<int>(width_ * route.minutes / slowest)), bar);
-      lv_obj_set_pos(r.fill, 0, y + title + gap);
+      lv_obj_set_width(r.fill, std::max(bar, static_cast<int>(width_ * route.minutes / slowest)));
       ui::set_fill(r.fill, i == 0 ? Tone::ACCENT : Tone::NORMAL, theme::MUTED);
       std::string detail = std::isfinite(route.distance) ? km(plugin_, route.distance) : "";
       const std::string how = i == 0 ? std::string(plugin_->text("fastest"))
                                      : tessera::fill(plugin_->text("slower"), "n",
                                                      whole(route.minutes - routes[0].minutes));
-      detail = detail.empty() ? how : detail + " · " + how;
-      r.detail = ui::label(parent_, Font::BODY, theme::MUTED);
-      lv_obj_set_width(r.detail, width_);
-      lv_obj_set_pos(r.detail, 0, y + title + gap + bar + gap);
-      ui::set_text(r.detail, detail);
-      rows_ = i + 1;
+      ui::set_text(r.detail, detail.empty() ? how : detail + " · " + how);
+      show(r, true);
     }
   }
 
  private:
-  void ask(const char *origin, const char *destination, const char *region) {
+  static constexpr int ROWS = 6;
+  struct Row {
+    lv_obj_t *name{}, *time{}, *track{}, *fill{}, *detail{};
+  };
+
+  static void show(Row &r, bool shown) {
+    for (lv_obj_t *part : {r.name, r.time, r.track, r.fill, r.detail}) {
+      if (shown) lv_obj_remove_flag(part, LV_OBJ_FLAG_HIDDEN);
+      else lv_obj_add_flag(part, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+
+  void ask(const char *origin, const char *destination) {
     asked_ = true;
     JsonDocument request;
     request["ask"] = "call_service:waze_travel_time.get_travel_times";
     request["data"]["origin"] = origin;
     request["data"]["destination"] = destination;
-    request["data"]["region"] = region;
+    request["data"]["region"] = region_;
     request["data"]["realtime"] = true;  // live traffic: the action's own default is without
     if (!plugin_->ask(this, request.as<JsonObjectConst>())) ui::set_text(note_, plugin_->text("failed"));
   }
 
-  static constexpr int ROWS = 6;
-  struct Row {
-    lv_obj_t *name{}, *time{}, *fill{}, *detail{};
-  };
   WazeTraveltime *plugin_;
   lv_obj_t *parent_{}, *note_{};
-  int width_ = 0, height_ = 0, rows_ = 0;
-  bool asked_ = false;
+  int width_ = 0, height_ = 0, fit_ = 0;
+  bool asked_ = false, filled_ = false;
+  char region_[4] = "eu";
   Row row_[ROWS];
 };
 
@@ -524,6 +548,39 @@ class RoutesCard : public tessera::Card, public Asker {
 void WazeTraveltime::setup() {
   add_tile("travel", [this]() { return new TravelTile(this); });
   add_card("routes", [this]() { return new RoutesCard(this); }, true);
+  add_bar_item("travel", [this]() { return bar(); });
+}
+
+// "23 min" in the top bar, or "23 min +8" when it is slower than the usual time, the car green, amber or red by the
+// delay. Nothing while the sensor has no travel time.
+tessera::BarItem WazeTraveltime::bar() const {
+  tessera::BarItem item;
+  if (!minutes_ || !minutes_->has_state() || !std::isfinite(minutes_->state) || minutes_->state < 0) return item;
+  item.shown = true;
+  item.icon = 0xF010B;  // car
+  const float minutes = minutes_->state;
+  item.text = tessera::fill(text("bar"), "n", whole(minutes));
+  const float usual = usual_ && std::isfinite(usual_->state) ? usual_->state : 0;
+  if (usual > 0) {
+    const float delay = minutes - usual;
+    item.tone = tone_of(delay);
+    if (lroundf(delay) >= 1)
+      item.text = tessera::fill(tessera::fill(text("bar_late"), "n", whole(minutes)).c_str(), "d", whole(delay));
+  }
+  return item;
+}
+
+bool WazeTraveltime::settings(tessera::SettingsPage &page) {
+  page.icon = "\U000F010B";
+  page.number(text("usual_time"), 0, 240, 1, text("min"),
+              [this]() { return usual_ && std::isfinite(usual_->state) ? static_cast<int>(usual_->state) : 0; },
+              [this](int value) {
+                if (!usual_) return;
+                auto call = usual_->make_call();
+                call.set_value(value);
+                call.perform();
+              });
+  return true;
 }
 
 uint32_t WazeTraveltime::ask(Asker *asker, JsonObjectConst request) {
@@ -545,17 +602,18 @@ void WazeTraveltime::remember(const char *entity, const char *origin, const char
   if (!slot) {
     slot = &trips_[next_trip_];
     next_trip_ = (next_trip_ + 1) % 4;
+    *slot = Trip{};
   }
   snprintf(slot->entity, sizeof slot->entity, "%s", entity);
-  snprintf(slot->origin, sizeof slot->origin, "%s", origin);
-  snprintf(slot->destination, sizeof slot->destination, "%s", destination);
+  if (origin) snprintf(slot->origin, sizeof slot->origin, "%s", origin);
+  if (destination) snprintf(slot->destination, sizeof slot->destination, "%s", destination);
   snprintf(slot->region, sizeof slot->region, "%s", region);
 }
 
 const Trip *WazeTraveltime::trip(const char *entity) const {
   if (!*entity) return nullptr;
   for (const Trip &t : trips_)
-    if (strcmp(t.entity, entity) == 0 && *t.origin) return &t;
+    if (strcmp(t.entity, entity) == 0) return &t;
   return nullptr;
 }
 

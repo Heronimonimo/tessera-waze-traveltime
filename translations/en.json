@@ -15,7 +15,10 @@
     "failed": "Waze did not answer",
     "no_routes": "No routes found",
     "fastest": "fastest",
-    "slower": "+{n} min"
+    "slower": "+{n} min",
+    "bar": "{n} min",
+    "bar_late": "{n} min +{d}",
+    "usual_time": "Usual travel time"
   },
   "app": {
     "name": "Waze travel time",
@@ -33,6 +36,12 @@
     "region_na": "North America",
     "region_il": "Israel",
     "region_au": "Australia",
-    "card_name": "Routes"
+    "card_name": "Routes",
+    "in_sensor": "Waze sensor for the top bar",
+    "in_sensor_hint": "The Waze Travel Time sensor the top bar's item shows. Tiles choose their own sensor in the inspector.",
+    "setting_usual": "Usual travel time in the top bar",
+    "setting_usual_hint": "Your time without traffic, in minutes: the top bar's car turns green, amber or red by the delay. 0 keeps it grey.",
+    "bar_travel": "Travel time",
+    "bar_example": "23 min +8"
   }
 }

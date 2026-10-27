@@ -3,24 +3,37 @@
 #
 # The tile belongs to a sensor of Home Assistant's Waze Travel Time integration: its state is the travel time in
 # minutes, its attributes the route, the distance and the two ends. The plugin asks Home Assistant for two more things
-# through the app: the sensor's recent history (the line on the tile) and Waze's route alternatives (the card). Nothing
-# else is needed: no key, no web service of its own; Waze is reached by Home Assistant's own integration.
+# through the app: the sensor's recent history (the line on the tile) and Waze's route alternatives (the card). The top
+# bar's item reads the sensor chosen when the plugin was added, on the screen itself. No key, no web service of its own:
+# Home Assistant's own integration asks Waze, which sees the two ends of the trip (README, "Privacy").
 id: waze_traveltime
-version: 0.1.0
+version: 0.2.0
 api: "0.10"
 icon: car
 maintainer: Heronimonimo
 license: MIT
 stage: beta
 topics: [travel]
+attributes: [cloud]
+privacy: https://github.com/Heronimonimo/tessera-waze-traveltime#privacy
 requires:
   esphome: 2026.6.2
 boards: any
-flash_kb: 16
+flash_kb: 18
 
 permissions:
   # The tile's line: the sensor's states of the last hours. The card: the routes Waze offers right now.
   ha_commands: ["history/history_during_period", "call_service:waze_travel_time.get_travel_times"]
+  # The top bar's item: the travel time of the sensor chosen when the plugin was added.
+  read_entities: ["{sensor}"]
+
+# The sensor the top bar's item shows, chosen once per screen when the plugin is added.
+inputs:
+  - { id: sensor, kind: entity, domains: [sensor], scope: screen, label: in_sensor, hint: in_sensor_hint }
+
+# The usual time the top bar's item colours its icon by: a number of plugin.yaml, by its name.
+settings:
+  - { key: waze_usual_time, label: setting_usual, hint: setting_usual_hint }
 
 answers:
   # history_during_period with minimal_response and no_attributes answers {"sensor.x": [{"s": "23.4", "lu": 1791...}]}:
@@ -61,3 +74,7 @@ tiles:
 cards:
   # The routes Waze offers right now, fastest first, opened by a tap on the tile.
   - { id: routes, name: card_name, wide: true }
+
+bar_items:
+  # "23 min" beside the page's name, its car in green, amber or red by the delay against the usual time.
+  - { id: travel, label: bar_travel, icon: car, example: bar_example }
