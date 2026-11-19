@@ -4,7 +4,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <ctime>
 #include <string>
 
 namespace esphome::waze_traveltime {
@@ -35,13 +34,21 @@ static std::string km(const tessera::Plugin *plugin, float distance) {
 // How bad a delay against the usual time is: within two minutes fine, within ten busy, worse an alert.
 static Tone tone_of(float delay) { return delay <= 2 ? Tone::GOOD : delay <= 10 ? Tone::BUSY : Tone::ALERT; }
 
-// A moment in UTC as Home Assistant's history takes it: "2026-10-19T06:12:00+00:00".
+// A moment in UTC as Home Assistant's history takes it: "2026-10-19T06:12:00+00:00". The date by arithmetic (Howard
+// Hinnant's civil_from_days), not gmtime_r and strftime: those bring the C library's time zones, its scanf and a
+// second printf into the firmware, about 20 KB, and a CYD has no such room.
 static std::string iso(uint32_t epoch) {
-  const time_t t = epoch;
-  struct tm u;
-  gmtime_r(&t, &u);
-  char b[32];
-  strftime(b, sizeof b, "%Y-%m-%dT%H:%M:%S+00:00", &u);
+  long days = static_cast<long>(epoch / 86400) + 719468;
+  const long era = days / 146097;
+  const unsigned doe = static_cast<unsigned>(days - era * 146097);
+  const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+  const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+  const unsigned mp = (5 * doy + 2) / 153;
+  const unsigned d = doy - (153 * mp + 2) / 5 + 1, m = mp < 10 ? mp + 3 : mp - 9;
+  const long y = static_cast<long>(yoe) + era * 400 + (m <= 2 ? 1 : 0);
+  const unsigned s = epoch % 86400;
+  char b[48];
+  snprintf(b, sizeof b, "%04ld-%02u-%02uT%02u:%02u:%02u+00:00", y, m, d, s / 3600, s / 60 % 60, s % 60);
   return b;
 }
 

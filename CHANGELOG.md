@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+- The plugin fits a CYD again. With Tessera's newest firmware it made a CYD's build about half a KB too large, so the
+  build failed. It now takes about 24 KB less: the time it sends with its question for the sensor's history is written
+  without the C library's clock functions, which brought time zones, a second printf and a scanf into the firmware.
+  Nothing changes on the screen.
+- The plugin says honestly how much flash it takes (24 KB), so the Plugins page warns on a screen with little room.
+
 ## 0.2.1
 - Nothing changes on the screen. A build no longer warns "array subscript 16 is outside array bounds" for the routes
   card: the warning came from the compiler's own sorting code, never from the plugin, but it read like a fault.
