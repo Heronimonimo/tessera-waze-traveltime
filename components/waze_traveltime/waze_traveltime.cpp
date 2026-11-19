@@ -484,7 +484,10 @@ class RoutesCard : public tessera::Card, public Asker {
       ui::set_text(note_, plugin_->text("no_routes"));
       return;
     }
-    std::sort(routes, routes + n, [](const Route &a, const Route &b) { return a.minutes < b.minutes; });
+    // Fastest first. An insertion sort of the six at most: std::sort on a small array makes GCC warn of a subscript
+    // past its end (its threshold of 16, never reached), a warning that reads like a fault of the plugin.
+    for (int i = 1; i < n; ++i)
+      for (int j = i; j > 0 && routes[j].minutes < routes[j - 1].minutes; --j) std::swap(routes[j], routes[j - 1]);
     lv_obj_add_flag(note_, LV_OBJ_FLAG_HIDDEN);
     filled_ = true;
 

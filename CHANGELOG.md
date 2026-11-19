@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+- Nothing changes on the screen. A build no longer warns "array subscript 16 is outside array bounds" for the routes
+  card: the warning came from the compiler's own sorting code, never from the plugin, but it read like a fault.
+
 ## 0.2.0
 - New: the travel time in the top bar. Add **Travel time** to a page's top bar (Top bar, Add, From plugins): "23 min",
   or "23 min +8" when it is slower than usual, with the car in green, amber or red.

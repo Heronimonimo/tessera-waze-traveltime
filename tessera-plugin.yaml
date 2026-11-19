@@ -7,7 +7,7 @@
 # bar's item reads the sensor chosen when the plugin was added, on the screen itself. No key, no web service of its own:
 # Home Assistant's own integration asks Waze, which sees the two ends of the trip (README, "Privacy").
 id: waze_traveltime
-version: 0.2.0
+version: 0.2.1
 api: "0.10"
 icon: car
 maintainer: Heronimonimo
